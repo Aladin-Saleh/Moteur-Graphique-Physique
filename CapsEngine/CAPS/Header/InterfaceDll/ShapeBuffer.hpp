@@ -1,0 +1,6 @@
+#ifndef __CAPS_INTERFACE_MODEL_BUFFER__
+#define __CAPS_INTERFACE_MODEL_BUFFER__
+
+class ShapeBuffer{};
+
+#endif // !__CAPS_INTERFACE_MODEL_BUFFER__

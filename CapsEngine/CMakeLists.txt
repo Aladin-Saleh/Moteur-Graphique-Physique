@@ -1,0 +1,137 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
+PROJECT(CAPS)
+
+# Paramètres
+
+SET(CMAKE_CXX_STANDARD 17)
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/Build)
+SET(CMAKE_DLL_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/CAPSDLL)
+SET(ThirdParty ${CMAKE_SOURCE_DIR}/ThirdParty)
+SET(CAPS_SOURCE ${CMAKE_SOURCE_DIR}/CAPS)
+# lib Extern 
+
+LINK_DIRECTORIES(${CMAKE_SOURCE_DIR}/Lib)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/ThirdParty)
+
+# Sous repertoire
+
+ADD_SUBDIRECTORY(ThirdParty)	
+ADD_SUBDIRECTORY(CAPS)
+ADD_SUBDIRECTORY(CAPSDLL)
+ADD_SUBDIRECTORY(DLLCompilationEXE_temporaire)
+SET(BUILD_FRAMEWORK 1)
+
+# Compiler detection
+IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+
+    # Using GNU GCC
+    SET(CAPS_USE_GCC 1)
+
+    IF(WIN32)
+        SET(COMPILER_DEPENDENCIES ${MINGW_DEPENDENCIES} -lpsapi)
+    ELSE()
+        SET(COMPILER_DEPENDENCIES ${GCC_DEPENDENCIES})
+    ENDIF()
+
+    ADD_DEFINITIONS(-D CAPS_USE_GCC)
+    MESSAGE(STATUS "Detected Compiler : GCC")
+
+    # For GCC, setting flags
+    SET(CXX_RELEASE_FLAGS   "-Wall -O3")
+    SET(CXX_DEBUG_FLAGS   "-Wall -Wextra -g -Wdouble-promotion -Wno-attributes")
+
+ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+
+    # Using Visual Studio C++
+    SET(CAPS_USE_MSVC 1)
+    SET(COMPILER_DEPENDENCIES ${MVSC_DEPENDENCIES})
+    ADD_DEFINITIONS(-D CAPS_USE_MSVC)
+    MESSAGE(STATUS "Compilateur détecté : MSVC")
+
+    # No flags for MVSC
+    # For GCC, setting flags
+    # SET(CXX_RELEASE_FLAGS "")
+    # SET(CXX_DEBUG_FLAGS   "")
+
+ELSE()
+
+    # TODO
+    SET(COMPILER_DEPENDENCIES)
+    MESSAGE(FATAL_ERROR "Compilateur détecté : Inconnu, veuillez utiliser GCC ou MSVC.")
+
+ENDIF()
+
+#Detection de l'os
+IF(WIN32)
+
+    #Windows
+    SET(CAPS_WINDOWS 1)
+    SET(PLATFORM_DEPENDENCIES ${WIN32_DEPENDENCIES})
+    ADD_DEFINITIONS(-D CAPS_WINDOWS)
+    MESSAGE(STATUS "Plateforme détectée : Windows")
+
+ELSEIF(UNIX)
+
+    #Unix OS
+    SET(CAPS_UNIX 1)
+    SET(PLATFORM_DEPENDENCIES ${UNIX_DEPENDENCIES})
+    ADD_DEFINITIONS(-D CAPS_UNIX)
+    MESSAGE(STATUS "Plateforme détectée : Unix")
+
+ELSEIF(APPLE)
+
+    #Mac os
+    SET(CAPS_APPLE 1)
+    SET(PLATFORM_DEPENDENCIES ${APPLE_DEPENDENCIES})
+    ADD_DEFINITIONS(-D CAPS_APPLE)
+    MESSAGE(STATUS "Plateforme détectée : Apple")
+
+ELSE()
+
+    #Non supporté
+    SET(PLATFORM_NOT_SUPORTED 0)
+    SET(PLATFORM_DEPENDENCIES)
+    ADD_DEFINITIONS(-D PLATFORM_NOT_SUPORTED)
+    MESSAGE(FATAL_ERROR "Cette plateforme n'est actuellement pas prise en charge")
+
+ENDIF()
+
+# Compilation mode
+IF(${CMAKE_BUILD_TYPE} MATCHES Debug)
+
+    # Debug
+    ADD_DEFINITIONS(-D CAPS_DEBUG)
+    SET(CAPS_BIN_OUTPUT ${CAPS_BIN_DIR_DBG})
+    SET(CAPS_LIB_OUTPUT ${CAPS_LIB_DIR_DBG})
+
+    MESSAGE(STATUS "Compilation mode  : Debug")
+    MESSAGE(STATUS "Project binary  output : ${CAPS_BIN_OUTPUT}")
+    MESSAGE(STATUS "Project library output : ${CAPS_LIB_OUTPUT}")
+
+    # Paramètres flags
+    IF(COMPILER_GCC)
+        # GCC
+        set(CMAKE_CXX_FLAGS_DEBUG ${CXX_DEBUG_FLAGS} CACHE STRING "DBG" FORCE)
+    ENDIF()
+ELSEIF(${CMAKE_BUILD_TYPE} MATCHES Release)
+
+    # Release mode
+    ADD_DEFINITIONS(-D CAPS_RELEASE)
+    SET(CAPS_BIN_OUTPUT ${CAPS_BIN_DIR_REL})
+    SET(CAPS_LIB_OUTPUT ${CAPS_LIB_DIR_REL})
+
+    MESSAGE(STATUS "Compilation mode  : Release")
+    MESSAGE(STATUS "Project binary  output : ${CAPS_BIN_OUTPUT}")
+    MESSAGE(STATUS "Project library output : ${CAPS_LIB_OUTPUT}")
+
+    # Paramètres flags
+    IF(COMPILER_GCC)
+        # GCC
+        set(CMAKE_CXX_FLAGS_DEBUG ${CXX_RELEASE_FLAGS} CACHE STRING "REL" FORCE)
+    ENDIF()
+ELSE()
+
+    # No mode
+    MESSAGE(FATAL_ERROR "Pas de mode de compilation exemple debug ou release.")
+
+ENDIF()
